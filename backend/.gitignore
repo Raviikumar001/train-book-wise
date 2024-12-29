@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+
+# Build outputs
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE - VSCode
+.vscode/*
+
+
+
+
+
+# TypeScript
+*.tsbuildinfo
+
+# Drizzle
+drizzle/.env
+.drizzle/
+migrations/.snapshot-*.json
+
+# Optional: Deployment files
+.vercel
+.netlify
+.deploy/
