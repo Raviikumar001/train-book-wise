@@ -2,16 +2,20 @@ import { logger } from "../utils/logger.js";
 
 // Custom error class for API errors
 export class APIError extends Error {
-  constructor(message, status = 500, code = "INTERNAL_SERVER_ERROR") {
+  constructor(
+    message,
+    status = 500,
+    code = "INTERNAL_SERVER_ERROR",
+    errors = null
+  ) {
     super(message);
     this.status = status;
     this.code = code;
+    this.errors = errors;
   }
 }
-
 // Error handler middleware
 export const errorHandler = (err, req, res, next) => {
-  // Log the error
   logger.error("Error occurred:", err);
 
   // Default error values
@@ -19,24 +23,6 @@ export const errorHandler = (err, req, res, next) => {
   let message = err.message || "Internal Server Error";
   let code = err.code || "INTERNAL_SERVER_ERROR";
   let errors = err.errors || null;
-
-  // Handle different types of errors
-  if (err.name === "ValidationError") {
-    status = 400;
-    code = "VALIDATION_ERROR";
-    errors = err.errors;
-  } else if (err.name === "UnauthorizedError") {
-    status = 401;
-    code = "UNAUTHORIZED";
-  } else if (err.name === "DatabaseError") {
-    status = 503;
-    code = "DATABASE_ERROR";
-    // Don't expose database errors in production
-    message =
-      process.env.NODE_ENV === "production"
-        ? "Database operation failed"
-        : err.message;
-  }
 
   // Create error response
   const errorResponse = {
@@ -50,7 +36,6 @@ export const errorHandler = (err, req, res, next) => {
     }),
   };
 
-  // Send error response
   res.status(status).json(errorResponse);
 };
 

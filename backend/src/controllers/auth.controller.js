@@ -1,99 +1,96 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { db } from "../config/db.config.js";
-import { users } from "../models/schema.js";
-import { eq } from "drizzle-orm";
+import { authService } from "../services/auth.service.js";
+import { registerSchema, loginSchema } from "../validators/auth.validation.js";
+import { asyncHandler } from "../middlewares/error.middleware.js";
+import { logger } from "../utils/logger.js";
+import { APIError } from "../middlewares/error.middleware.js";
 
-export const register = async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    // Check if user exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (existingUser.length > 0) {
-      return res.status(400).json({ message: "Email already registered" });
+export const authController = {
+  register: asyncHandler(async (req, res) => {
+    // Validate input
+    const { error } = registerSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errorMessages = error.details.map((detail) => detail.message);
+      throw new APIError(
+        "Validation failed",
+        400,
+        "VALIDATION_ERROR",
+        errorMessages
+      );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Register user
+    const result = await authService.register(req.body);
 
-    // Create user
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        username,
-        email,
-        password: hashedPassword,
-      })
-      .returning();
-
-    // Generate token
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
-
+    logger.success("User registered successfully");
     res.status(201).json({
-      message: "User registered successfully",
-      token,
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-      },
+      status: "success",
+      message: "Registration successful!",
+      data: result,
     });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
+  }),
 
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+  login: asyncHandler(async (req, res) => {
+    // Validate input
+    const { error } = loginSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errorMessages = error.details.map((detail) => detail.message);
+      throw new APIError(
+        "Validation failed",
+        400,
+        "VALIDATION_ERROR",
+        errorMessages
+      );
     }
 
-    // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Login user
+    const result = await authService.login(req.body.email, req.body.password);
 
-    if (!isValidPassword) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
-    );
-
+    logger.success("User logged in successfully");
     res.json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
+      status: "success",
+      message: "Login successful!",
+      data: result,
     });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+  }),
 };
+
+// import { authService } from "../services/auth.service.js";
+// import { registerSchema, loginSchema } from "../validators/auth.validation.js";
+// import { asyncHandler } from "../middlewares/error.middleware.js";
+// import { logger } from "../utils/logger.js";
+
+// export const authController = {
+//   register: asyncHandler(async (req, res) => {
+//     // Validate input
+//     const { error } = registerSchema.validate(req.body);
+//     if (error) {
+//       throw new APIError(error.details[0].message, 400, "VALIDATION_ERROR");
+//     }
+
+//     // Register user
+//     const result = await authService.register(req.body);
+
+//     logger.success("User registered successfully");
+//     res.status(201).json({
+//       status: "success",
+//       data: result,
+//     });
+//   }),
+
+//   login: asyncHandler(async (req, res) => {
+//     // Validate input
+//     const { error } = loginSchema.validate(req.body);
+//     if (error) {
+//       throw new APIError(error.details[0].message, 400, "VALIDATION_ERROR");
+//     }
+
+//     // Login user
+//     const result = await authService.login(req.body.email, req.body.password);
+
+//     logger.success("User logged in successfully");
+//     res.json({
+//       status: "success",
+//       data: result,
+//     });
+//   }),
+// };
