@@ -57,20 +57,95 @@ export const bookingController = {
     });
   }),
 
+  // getUserBookings: asyncHandler(async (req, res) => {
+  //   const bookings = await bookingService.getUserBookings(req.user.id);
+  //   res.json({
+  //     status: "success",
+  //     data: bookings,
+  //   });
+  // }),
+
+  // resetUserBookings: asyncHandler(async (req, res) => {
+  //   const bookings = await bookingService.resetUserBookings(req.user.id);
+  //   res.json({
+  //     status: "success",
+  //     message: "All bookings have been reset",
+  //     data: bookings,
+  //   });
+  // }),
+
   getUserBookings: asyncHandler(async (req, res) => {
-    const bookings = await bookingService.getUserBookings(req.user.id);
+    const userBookings = await bookingService.getUserBookings(req.user.id);
+
     res.json({
       status: "success",
-      data: bookings,
+      data: {
+        bookings: userBookings,
+        total_bookings: userBookings.length,
+      },
     });
   }),
 
+  // Reset all bookings for a user
+  // resetUserBookings: asyncHandler(async (req, res) => {
+  //   const result = await bookingService.resetUserBookings(req.user.id);
+
+  //   res.json({
+  //     status: "success",
+  //     message: result.message,
+  //     data: {
+  //       cancelled_bookings: result.cancelledBookings,
+  //       total_cancelled: result.cancelledBookings.length,
+  //     },
+  //   });
+  // }),
+
   resetUserBookings: asyncHandler(async (req, res) => {
-    const bookings = await bookingService.resetUserBookings(req.user.id);
+    const result = await bookingService.resetUserBookings(req.user.id);
+
+    // If there were no active bookings, check if there are any seats that need resetting
+    if (result.cancelledBookings.length === 0) {
+      // Find any seats that might be stuck with is_booked = true
+      const stuckSeats = await db
+        .select()
+        .from(seats)
+        .where(eq(seats.is_booked, true));
+
+      if (stuckSeats.length > 0) {
+        // Reset these seats
+        await db
+          .update(seats)
+          .set({ is_booked: false })
+          .where(eq(seats.is_booked, true))
+          .returning();
+
+        return res.json({
+          status: "success",
+          message: "Reset stuck seats",
+          data: {
+            seats_reset: stuckSeats,
+            total_reset: stuckSeats.length,
+          },
+        });
+      }
+    }
+
     res.json({
       status: "success",
-      message: "All bookings have been reset",
-      data: bookings,
+      message: result.message,
+      data: {
+        cancelled_bookings: result.cancelledBookings,
+        updated_seats: result.updatedSeats,
+        total_cancelled: result.cancelledBookings.length,
+      },
+    });
+  }),
+
+  getBookingStatus: asyncHandler(async (req, res) => {
+    const status = await bookingService.getBookingStatus(req.user.id);
+    res.json({
+      status: "success",
+      data: status,
     });
   }),
 };

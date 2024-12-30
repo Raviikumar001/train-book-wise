@@ -1,6 +1,6 @@
 import { db } from "../config/db.config.js";
 import { bookings, seats } from "../models/schema.js";
-import { eq, and, gte } from "drizzle-orm";
+import { eq, and, gte, inArray } from "drizzle-orm";
 import { APIError } from "../middlewares/error.middleware.js";
 import { logger } from "../utils/logger.js";
 
@@ -325,6 +325,149 @@ export const bookingService = {
       logger.error("Error cancelling bookings:", error);
     }
   },
+
+  async getUserBookings(userId) {
+    try {
+      const userBookings = await db
+        .select({
+          booking: {
+            id: bookings.id,
+            booking_date: bookings.booking_date,
+            status: bookings.status,
+            created_at: bookings.created_at,
+          },
+          seat: {
+            id: seats.id,
+            row_number: seats.row_number,
+            seat_number: seats.seat_number,
+          },
+        })
+        .from(bookings)
+        .leftJoin(seats, eq(bookings.seat_id, seats.id))
+        .where(and(eq(bookings.user_id, userId), eq(bookings.status, "active")))
+        .orderBy(bookings.booking_date);
+
+      return userBookings.map(({ booking, seat }) => ({
+        ...booking,
+        seat_details: seat,
+      }));
+    } catch (error) {
+      logger.error("Error fetching user bookings:", error);
+      throw new APIError(
+        "Failed to fetch user bookings",
+        500,
+        "FETCH_BOOKINGS_ERROR"
+      );
+    }
+  },
+
+  //exp
+
+  // Reset (cancel) all user's bookings
+
+  async resetUserBookings(userId) {
+    try {
+      // Log the userId for debugging
+      logger.info(`Attempting to reset bookings for user: ${userId}`);
+
+      // Get all active bookings for the user
+      const activeBookings = await db
+        .select()
+        .from(bookings)
+        .where(
+          and(eq(bookings.user_id, userId), eq(bookings.status, "active"))
+        );
+
+      // Log found bookings
+      logger.info(`Found ${activeBookings.length} active bookings`);
+
+      if (activeBookings.length === 0) {
+        return {
+          message: "No active bookings found",
+          cancelledBookings: [],
+        };
+      }
+
+      // Get all seat IDs from active bookings
+      const seatIds = activeBookings.map((booking) => booking.seat_id);
+      logger.info(`Seats to update: ${seatIds.join(", ")}`);
+
+      // First update the seats
+      const updatedSeats = await db
+        .update(seats)
+        .set({ is_booked: false })
+        .where(inArray(seats.id, seatIds))
+        .returning();
+
+      logger.info(`Updated ${updatedSeats.length} seats to is_booked=false`);
+
+      // Then update the bookings
+      const cancelledBookings = await db
+        .update(bookings)
+        .set({
+          status: "cancelled",
+        })
+        .where(and(eq(bookings.user_id, userId), eq(bookings.status, "active")))
+        .returning();
+
+      logger.info(`Cancelled ${cancelledBookings.length} bookings`);
+
+      // Verify the updates
+      const verifySeats = await db
+        .select()
+        .from(seats)
+        .where(inArray(seats.id, seatIds));
+
+      logger.info(
+        "Verification of updated seats:",
+        verifySeats.map((s) => ({ id: s.id, is_booked: s.is_booked }))
+      );
+
+      return {
+        message: `Successfully cancelled ${cancelledBookings.length} booking(s)`,
+        cancelledBookings,
+        updatedSeats: verifySeats,
+      };
+    } catch (error) {
+      logger.error("Error resetting user bookings:", error);
+      throw new APIError(
+        "Failed to reset user bookings",
+        500,
+        "RESET_BOOKINGS_ERROR"
+      );
+    }
+  },
+
+  // Add a helper method to verify seat status
+  async verifySeatStatus(seatIds) {
+    const seatStatus = await db
+      .select()
+      .from(seats)
+      .where(inArray(seats.id, seatIds));
+
+    return seatStatus;
+  },
+
+  //booking status
+  async getBookingStatus(userId) {
+    const [activeBookings, bookedSeats] = await Promise.all([
+      db
+        .select()
+        .from(bookings)
+        .where(
+          and(eq(bookings.user_id, userId), eq(bookings.status, "active"))
+        ),
+      db.select().from(seats).where(eq(seats.is_booked, true)),
+    ]);
+
+    return {
+      activeBookings,
+      bookedSeats,
+      totalActiveBookings: activeBookings.length,
+      totalBookedSeats: bookedSeats.length,
+    };
+  },
+  //exp
 
   // Helper function to find best available seats
   async findBestAvailableSeats(numSeats, availableSeats) {
