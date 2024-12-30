@@ -1,28 +1,28 @@
-import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { db } from "../db";
-import { users } from "../db/schema/schema";
+import { db } from "../config/db.config.js";
+import { users } from "../models/schema.js";
 import { eq } from "drizzle-orm";
-import { RegisterUserInput, LoginInput, AuthResponse } from "../types";
 
-export const register = async (
-  req: Request<{}, AuthResponse, RegisterUserInput>,
-  res: Response,
-) => {
+export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    const existingUser = await db.findFirst({
-      where: eq(users.email, email),
-    });
+    // Check if user exists
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-    if (existingUser) {
+    if (existingUser.length > 0) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const [newUser] = await db
       .insert(users)
       .values({
@@ -32,10 +32,11 @@ export const register = async (
       })
       .returning();
 
+    // Generate token
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email },
-      process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "24h" },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
     );
 
     res.status(201).json({
@@ -53,31 +54,33 @@ export const register = async (
   }
 };
 
-export const login = async (
-  req: Request<{}, AuthResponse, LoginInput>,
-  res: Response,
-) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
+    // Find user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Generate token
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "your-secret-key",
-      { expiresIn: "24h" },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
     );
 
     res.json({

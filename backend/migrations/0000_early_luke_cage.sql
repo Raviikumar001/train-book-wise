@@ -8,19 +8,17 @@ CREATE TABLE "bookings" (
 --> statement-breakpoint
 CREATE TABLE "seats" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"seat_number" integer NOT NULL,
 	"row_number" integer NOT NULL,
-	"is_booked" boolean DEFAULT false,
-	"created_at" timestamp DEFAULT now()
+	"seat_number" integer NOT NULL,
+	"is_booked" boolean DEFAULT false
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"username" varchar(50) NOT NULL,
-	"email" varchar(100) NOT NULL,
+	"username" varchar(255) NOT NULL,
+	"email" varchar(255) NOT NULL,
 	"password" varchar(255) NOT NULL,
 	"created_at" timestamp DEFAULT now(),
-	CONSTRAINT "users_username_unique" UNIQUE("username"),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint

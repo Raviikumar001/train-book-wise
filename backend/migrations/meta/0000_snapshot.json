@@ -1,5 +1,5 @@
 {
-  "id": "82ea716a-5bc1-45b0-b083-034d488613c7",
+  "id": "98fc279f-604f-4a85-a25e-19f1f5fd3394",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -86,14 +86,14 @@
           "primaryKey": true,
           "notNull": true
         },
-        "seat_number": {
-          "name": "seat_number",
+        "row_number": {
+          "name": "row_number",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "row_number": {
-          "name": "row_number",
+        "seat_number": {
+          "name": "seat_number",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -104,13 +104,6 @@
           "primaryKey": false,
           "notNull": false,
           "default": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
         }
       },
       "indexes": {},
@@ -133,13 +126,13 @@
         },
         "username": {
           "name": "username",
-          "type": "varchar(50)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
         "email": {
           "name": "email",
-          "type": "varchar(100)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
@@ -161,13 +154,6 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_username_unique": {
-          "name": "users_username_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
-        },
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
