@@ -24,10 +24,15 @@ export const seats = pgTable("seats", {
 
 export const bookings = pgTable("bookings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  seatId: integer("seat_id").references(() => seats.id),
-  bookingTime: timestamp("booking_time").defaultNow(),
-  status: varchar("status", { length: 20 }).default("active"),
+  user_id: integer("user_id")
+    .references(() => users.id)
+    .notNull(),
+  seat_id: integer("seat_id")
+    .references(() => seats.id)
+    .notNull(),
+  booking_date: timestamp("booking_date").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // import {

@@ -7,6 +7,7 @@ import {
 } from "./src/middlewares/error.middleware.js";
 import { logger } from "./src/utils/logger.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import bookingRoutes from "./src/routes/booking.routes.js";
 import {
   db,
   checkDatabaseConnection,
@@ -28,8 +29,9 @@ console.log(
   process.env.DATABASE_URL ? "Defined" : "Not defined"
 );
 
-// Routes - Define all routes BEFORE error handlers
+// Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 app.get("/health", async (req, res) => {
   const isConnected = await checkDatabaseConnection();
