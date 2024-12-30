@@ -4,19 +4,11 @@ import { authenticateUser } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticateUser); // Changed from authMiddleware
+router.use(authenticateUser);
 
-// Get available seats
 router.get("/seats/available", bookingController.getAvailableSeats);
-
-// Book a seat
-router.post("/book", bookingController.bookSeat);
-
-// Get user's bookings
+router.post("/book", bookingController.bookSeats);
 router.get("/my-bookings", bookingController.getUserBookings);
-
-// Cancel booking
-router.put("/cancel/:id", bookingController.cancelBooking);
+router.post("/reset", bookingController.resetUserBookings);
 
 export default router;
