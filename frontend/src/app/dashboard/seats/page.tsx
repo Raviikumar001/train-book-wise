@@ -1,157 +1,168 @@
-// src/app/dashboard/seats/page.tsx
 "use client";
 
+import React from "react";
 import { useState, useEffect } from "react";
-import { toast } from "react-hot-toast";
-import api from "@/app/lib/axios";
+import { useAuth } from "@/app/store/useAuth";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { LogOut, Train } from "lucide-react";
+import axios from "axios";
+import { ReservationForm } from "@/app/components/booking/ReservationForm";
+import { SeatMap } from "@/app/components/booking/SeatMap";
 
-// Types
-interface Seat {
-  id: number;
-  seatNumber: string;
-  isBooked: boolean;
-  price: number;
-  row: number;
-  column: number;
+interface BookingStats {
+  total_seats: number;
+  booked_seats: number;
+  available_seats: number;
 }
 
-export default function SeatsPage() {
+interface Seat {
+  id: number;
+  row_number: number;
+  seat_number: number;
+  is_booked: boolean;
+}
+
+export default function DashboardPage() {
+  const { user, logout, token } = useAuth();
+  const router = useRouter();
   const [seats, setSeats] = useState<Seat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
-  const [totalPrice, setTotalPrice] = useState(0);
+  const [stats, setStats] = useState<BookingStats>({
+    total_seats: 80,
+    booked_seats: 0,
+    available_seats: 80,
+  });
+  const [isReservationVisible, setIsReservationVisible] = useState(false);
 
-  // Fetch seats data
+  const fetchBookingStatus = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/bookings/seats/available?date=${
+          new Date().toISOString().split("T")[0]
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setStats(response.data.data.statistics);
+      setSeats(response.data.data.seats);
+    } catch (error) {
+      console.error("Failed to fetch booking status:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchSeats();
-  }, []);
+    fetchBookingStatus();
+    const intervalId = setInterval(fetchBookingStatus, 30000);
+    return () => clearInterval(intervalId);
+  }, [token]);
 
-  const fetchSeats = async () => {
-    try {
-      const response = await api.get("http://localhost:4000/api/seats");
-      setSeats(response.data);
-    } catch (error) {
-      toast.error("Failed to load seats");
-    } finally {
-      setLoading(false);
-    }
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
   };
-
-  // Handle seat selection
-  const handleSeatClick = (seat: Seat) => {
-    if (seat.isBooked) return;
-
-    setSelectedSeats((prev) => {
-      const isSelected = prev.includes(seat.id);
-      const updated = isSelected
-        ? prev.filter((id) => id !== seat.id)
-        : [...prev, seat.id];
-
-      // Update total price
-      const newTotalPrice = updated.reduce((sum, seatId) => {
-        const seat = seats.find((s) => s.id === seatId);
-        return sum + (seat?.price || 0);
-      }, 0);
-      setTotalPrice(newTotalPrice);
-
-      return updated;
-    });
-  };
-
-  // Handle booking submission
-  const handleBooking = async () => {
-    if (selectedSeats.length === 0) {
-      toast.error("Please select at least one seat");
-      return;
-    }
-
-    try {
-      await api.post("http://localhost:4000/api/bookings", {
-        seatIds: selectedSeats,
-      });
-
-      toast.success("Booking successful!");
-      setSelectedSeats([]);
-      setTotalPrice(0);
-      fetchSeats(); // Refresh seats data
-    } catch (error) {
-      toast.error("Booking failed. Please try again.");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-6">Select Your Seats</h1>
+    <div className="min-h-screen bg-gray-50">
+      <div
+        className="min-h-screen bg-cover bg-center"
+        style={{
+          backgroundImage: `url('/train-interior.jpg')`,
+          backgroundColor: "rgba(255,255,255,0.9)",
+          backgroundBlendMode: "overlay",
+        }}
+      >
+        {/* Header */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <motion.div
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-center"
+              >
+                <Train size={36} className="text-primary mr-3" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary">
+                  Luxury Train
+                </h1>
+              </motion.div>
 
-        {/* Legend */}
-        <div className="flex gap-6 mb-6">
-          <div className="flex items-center">
-            <div className="w-6 h-6 bg-white border-2 border-blue-500 rounded mr-2" />
-            <span>Available</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-6 h-6 bg-gray-300 rounded mr-2" />
-            <span>Booked</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-6 h-6 bg-green-500 rounded mr-2" />
-            <span>Selected</span>
-          </div>
-        </div>
-
-        {/* Seats Grid */}
-        <div className="grid grid-cols-8 gap-2 mb-8">
-          {seats.map((seat) => (
-            <button
-              key={seat.id}
-              onClick={() => handleSeatClick(seat)}
-              disabled={seat.isBooked}
-              className={`
-                w-12 h-12 rounded-lg flex items-center justify-center text-sm font-semibold
-                transition-all duration-200
-                ${
-                  seat.isBooked
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : selectedSeats.includes(seat.id)
-                    ? "bg-green-500 text-white"
-                    : "bg-white border-2 border-blue-500 hover:bg-blue-50"
-                }
-              `}
-            >
-              {seat.seatNumber}
-            </button>
-          ))}
-        </div>
-
-        {/* Booking Summary */}
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <p className="text-gray-600">
-                Selected Seats: {selectedSeats.length}
-              </p>
-              <p className="text-gray-600">Total Price: ${totalPrice}</p>
+              <motion.div
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-center gap-4"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm text-gray-600">{user?.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date().toLocaleDateString()}
+                  </p>
+                </div>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="whitespace-nowrap"
+                >
+                  <LogOut className="mr-2 h-4 w-4" /> Logout
+                </Button>
+              </motion.div>
             </div>
-            <button
-              onClick={handleBooking}
-              disabled={selectedSeats.length === 0}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
-                       disabled:bg-gray-300 disabled:cursor-not-allowed
-                       transition-colors duration-200"
+          </div>
+        </header>
+
+        {/* Mobile Reservation Toggle */}
+        <div className="lg:hidden sticky top-[73px] z-20 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+          <div className="container mx-auto px-4 py-2">
+            <Button
+              onClick={() => setIsReservationVisible(!isReservationVisible)}
+              className="w-full"
+              variant="outline"
             >
-              Book Selected Seats
-            </button>
+              {isReservationVisible
+                ? "Hide Reservation Form"
+                : "Show Reservation Form"}
+            </Button>
           </div>
         </div>
+
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Reservation Form - Fixed on desktop, expandable on mobile */}
+            <motion.div
+              className={`
+                lg:w-[400px] lg:block
+                ${isReservationVisible ? "block" : "hidden"}
+              `}
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="lg:sticky lg:top-[100px]">
+                <ReservationForm
+                  stats={stats}
+                  onReservation={fetchBookingStatus}
+                />
+              </div>
+            </motion.div>
+
+            {/* Seat Map - Fills remaining space */}
+            <motion.div
+              className="flex-1"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <SeatMap seats={seats} />
+            </motion.div>
+          </div>
+        </main>
       </div>
     </div>
   );

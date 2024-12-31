@@ -1,4 +1,3 @@
-// app/(auth)/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,6 +5,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/store/useAuth";
 import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Train } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,78 +42,57 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-blue-400 to-purple-500">
+      <Card className="w-full max-w-md bg-card">
+        <CardHeader className="space-y-1">
+          <div className="flex items-center justify-center">
+            <Train className="w-12 h-12 text-primary" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">
+            Login
+          </CardTitle>
+          <CardDescription className="text-center">
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
+              <Input
                 type="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border 
-                         border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md 
-                         focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="Email"
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
+                className="w-full"
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
+              <Input
                 type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border 
-                         border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md 
-                         focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
+                className="w-full"
               />
             </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent 
-                       text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                       disabled:bg-blue-300 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Signing in..." : "Sign in"}
-            </button>
-          </div>
-
-          <div className="text-sm text-center">
-            <Link
-              href="/signup"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Don&apos;t have an account? Sign up
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter>
+          <p className="text-center text-sm text-muted-foreground mt-2 w-full">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-primary hover:underline">
+              Register here
             </Link>
-          </div>
-        </form>
-      </div>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

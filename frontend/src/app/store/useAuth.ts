@@ -1,4 +1,5 @@
 // store/useAuth.ts
+"use client";
 import { create } from "zustand";
 import Cookies from "js-cookie";
 import axios from "axios";
@@ -31,11 +32,13 @@ export const useAuth = create<AuthState>((set) => ({
           password,
         }
       );
-
-      const { token, user } = response.data;
+      console.log(response, "response data");
+      const { token, user } = response.data.data;
+      console.log(token, user, "token and user");
 
       // Store token in cookie
       Cookies.set("token", token, { expires: 7 });
+      localStorage.setItem("token", token);
 
       // Update state
       set({

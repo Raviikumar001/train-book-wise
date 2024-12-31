@@ -27,9 +27,7 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
-      const response = await api.get(
-        "http://localhost:4000/api/bookings/my-bookings"
-      );
+      const response = await api.get("/my-bookings");
       setBookings(response.data);
     } catch (error) {
       toast.error("Failed to load bookings");
@@ -37,7 +35,6 @@ export default function BookingsPage() {
       setLoading(false);
     }
   };
-
   // Format date using native JavaScript
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
