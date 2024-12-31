@@ -22,7 +22,7 @@ interface ReservationFormProps {
     total_seats: number;
     booked_seats: number;
     available_seats: number;
-  };
+  } | null;
   onReservation: () => void;
 }
 

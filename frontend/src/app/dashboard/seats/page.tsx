@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const { user, logout, token } = useAuth();
   const router = useRouter();
   const [seats, setSeats] = useState<Seat[]>([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState<BookingStats | null>(null);
   const [isReservationVisible, setIsReservationVisible] = useState(false);
 
   const fetchBookingStatus = async () => {
