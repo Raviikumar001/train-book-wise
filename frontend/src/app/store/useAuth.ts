@@ -31,7 +31,7 @@ export const useAuth = create<AuthState>((set) => ({
   register: async (name: string, email: string, password: string) => {
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/auth/register",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`,
         {
           name,
           email,
@@ -55,8 +55,9 @@ export const useAuth = create<AuthState>((set) => ({
 
   login: async (email: string, password: string) => {
     try {
+      console.log("login", process.env.NEXT_PUBLIC_API_BASE_URL);
       const response = await axios.post(
-        "http://localhost:4000/api/auth/login",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
         {
           email,
           password,

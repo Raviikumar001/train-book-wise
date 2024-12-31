@@ -34,7 +34,9 @@ export default function DashboardPage() {
   const fetchBookingStatus = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/bookings/seats/available?date=${
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL
+        }/api/bookings/seats/available?date=${
           new Date().toISOString().split("T")[0]
         }`,
         {
