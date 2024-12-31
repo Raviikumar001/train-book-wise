@@ -43,7 +43,7 @@ export default function LoginPage() {
 
   const handleDummyLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setFormData({ email: "hisoka@gmail.com", password: "qwertY123" });
+    setFormData({ email: "hisoka@gmail.com", password: "passWord123" });
   };
 
   return (
