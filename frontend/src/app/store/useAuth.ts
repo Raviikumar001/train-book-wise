@@ -9,6 +9,11 @@ interface AuthState {
   user: any | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
   logout: () => void;
   setToken: (token: string) => void;
 }
@@ -19,8 +24,33 @@ export const useAuth = create<AuthState>((set) => ({
   isAuthenticated: !!Cookies.get("token"),
 
   setToken: (token: string) => {
-    Cookies.set("token", token, { expires: 7 }); // Token expires in 7 days
+    Cookies.set("token", token, { expires: 7 });
     set({ token, isAuthenticated: true });
+  },
+
+  register: async (name: string, email: string, password: string) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/auth/register",
+        {
+          name,
+          email,
+          password,
+        }
+      );
+
+      const { token, user } = response.data.data;
+
+      Cookies.set("token", token, { expires: 7 });
+
+      set({
+        token,
+        user,
+        isAuthenticated: true,
+      });
+    } catch (error) {
+      throw error;
+    }
   },
 
   login: async (email: string, password: string) => {
@@ -32,15 +62,10 @@ export const useAuth = create<AuthState>((set) => ({
           password,
         }
       );
-      console.log(response, "response data");
       const { token, user } = response.data.data;
-      console.log(token, user, "token and user");
 
-      // Store token in cookie
       Cookies.set("token", token, { expires: 7 });
-      localStorage.setItem("token", token);
 
-      // Update state
       set({
         token,
         user,
@@ -53,6 +78,7 @@ export const useAuth = create<AuthState>((set) => ({
 
   logout: () => {
     Cookies.remove("token");
+    localStorage.removeItem("token");
     set({ token: null, user: null, isAuthenticated: false });
   },
 }));

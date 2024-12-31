@@ -41,8 +41,13 @@ export default function LoginPage() {
     }
   };
 
+  const handleDummyLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormData({ email: "hisoka@gmail.com", password: "qwertY123" });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-blue-400 to-purple-500">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-custom-gradient">
       <Card className="w-full max-w-md bg-card">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center">
@@ -79,6 +84,9 @@ export default function LoginPage() {
                 className="w-full"
               />
             </div>
+            <Button type="submit" className="w-full" onClick={handleDummyLogin}>
+              Dummy Login
+            </Button>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Logging in..." : "Login"}
             </Button>

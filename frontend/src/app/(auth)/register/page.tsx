@@ -16,12 +16,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Train } from "lucide-react";
+import { useAuth } from "@/app/store/useAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
   });
@@ -31,47 +33,34 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      await register(formData.name, formData.email, formData.password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
-
-      toast.success("Registration successful! Please login.");
+      toast.success("Registration successful! ");
       router.push("/login");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Registration failed"
-      );
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-blue-400 to-purple-500">
-      <Card className="w-full max-w-md bg-card">
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: "linear-gradient(to top left, #bdc2e8, #bdc2e8, #e6dee9)",
+      }}
+    >
+      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm shadow-lg border border-gray-100">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center">
             <Train className="w-12 h-12 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
-            Register
+            Create Account
           </CardTitle>
           <CardDescription className="text-center">
-            Create a new account
+            Enter your details to create your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -79,11 +68,12 @@ export default function RegisterPage() {
             <div>
               <Input
                 placeholder="Username"
-                value={formData.username}
+                value={formData.name}
                 onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
+                  setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full"
+                className="w-full bg-white"
+                required
               />
             </div>
             <div>
@@ -94,7 +84,8 @@ export default function RegisterPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full"
+                className="w-full bg-white"
+                required
               />
             </div>
             <div>
@@ -105,19 +96,31 @@ export default function RegisterPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full"
+                className="w-full bg-white"
+                required
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Registering..." : "Register"}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2" />
+                  Creating Account...
+                </div>
+              ) : (
+                "Create Account"
+              )}
             </Button>
           </form>
         </CardContent>
         <CardFooter>
           <p className="text-center text-sm text-muted-foreground mt-2 w-full">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
-              Login here
+            <Link
+              href="/login"
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in
             </Link>
           </p>
         </CardFooter>
