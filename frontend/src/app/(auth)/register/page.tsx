@@ -109,7 +109,7 @@ export default function RegisterPage() {
     try {
       await register(formData.name, formData.email, formData.password);
       toast.success("Registration successful!");
-      router.push("/login");
+      router.push("/dashboard/seats");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Registration failed");
     } finally {
