@@ -6,7 +6,6 @@ import { APIError } from "../middlewares/error.middleware.js";
 
 export const authController = {
   register: asyncHandler(async (req, res) => {
-    // Validate input
     const { error } = registerSchema.validate(req.body, { abortEarly: false });
     if (error) {
       const errorMessages = error.details.map((detail) => detail.message);
@@ -18,7 +17,6 @@ export const authController = {
       );
     }
 
-    // Register user
     const result = await authService.register(req.body);
 
     logger.success("User registered successfully");
@@ -30,7 +28,6 @@ export const authController = {
   }),
 
   login: asyncHandler(async (req, res) => {
-    // Validate input
     const { error } = loginSchema.validate(req.body, { abortEarly: false });
     if (error) {
       const errorMessages = error.details.map((detail) => detail.message);
@@ -42,7 +39,6 @@ export const authController = {
       );
     }
 
-    // Login user
     const result = await authService.login(req.body.email, req.body.password);
 
     logger.success("User logged in successfully");
@@ -53,44 +49,3 @@ export const authController = {
     });
   }),
 };
-
-// import { authService } from "../services/auth.service.js";
-// import { registerSchema, loginSchema } from "../validators/auth.validation.js";
-// import { asyncHandler } from "../middlewares/error.middleware.js";
-// import { logger } from "../utils/logger.js";
-
-// export const authController = {
-//   register: asyncHandler(async (req, res) => {
-//     // Validate input
-//     const { error } = registerSchema.validate(req.body);
-//     if (error) {
-//       throw new APIError(error.details[0].message, 400, "VALIDATION_ERROR");
-//     }
-
-//     // Register user
-//     const result = await authService.register(req.body);
-
-//     logger.success("User registered successfully");
-//     res.status(201).json({
-//       status: "success",
-//       data: result,
-//     });
-//   }),
-
-//   login: asyncHandler(async (req, res) => {
-//     // Validate input
-//     const { error } = loginSchema.validate(req.body);
-//     if (error) {
-//       throw new APIError(error.details[0].message, 400, "VALIDATION_ERROR");
-//     }
-
-//     // Login user
-//     const result = await authService.login(req.body.email, req.body.password);
-
-//     logger.success("User logged in successfully");
-//     res.json({
-//       status: "success",
-//       data: result,
-//     });
-//   }),
-// };

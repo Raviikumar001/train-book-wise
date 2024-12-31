@@ -9,7 +9,6 @@ import { logger } from "../utils/logger.js";
 export const authService = {
   async register(userData) {
     try {
-      // Check if user exists
       const existingUser = await db
         .select()
         .from(users)
@@ -24,11 +23,9 @@ export const authService = {
         );
       }
 
-      // Hash password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
 
-      // Create user
       const [newUser] = await db
         .insert(users)
         .values({
@@ -42,7 +39,6 @@ export const authService = {
           email: users.email,
         });
 
-      // Generate token
       const token = generateToken(newUser.id);
 
       return {
@@ -62,7 +58,6 @@ export const authService = {
 
   async login(email, password) {
     try {
-      // Find user
       const [user] = await db
         .select()
         .from(users)
@@ -77,7 +72,6 @@ export const authService = {
         );
       }
 
-      // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
         throw new APIError(
@@ -87,7 +81,6 @@ export const authService = {
         );
       }
 
-      // Generate token
       const token = generateToken(user.id);
 
       return {

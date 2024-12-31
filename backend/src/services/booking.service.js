@@ -5,10 +5,8 @@ import { APIError } from "../middlewares/error.middleware.js";
 import { logger } from "../utils/logger.js";
 
 export const bookingService = {
-  // Get all available seats with statistics
   async getAvailableSeats(date) {
     try {
-      // Get all seats
       const allSeats = await db.select().from(seats);
 
       // Get active bookings for the given date
@@ -53,113 +51,6 @@ export const bookingService = {
   },
 
   //   // Book multiple seats
-  //   async bookSeats(userId, numSeats, date) {
-  //     try {
-  //       if (numSeats > 7) {
-  //         throw new APIError(
-  //           "Maximum 7 seats can be booked at once",
-  //           400,
-  //           "EXCEED_MAX_SEATS"
-  //         );
-  //       }
-
-  //       // Get current seat availability
-  //       const { seats: availableSeats, statistics } =
-  //         await this.getAvailableSeats(date);
-
-  //       if (statistics.available_seats < numSeats) {
-  //         throw new APIError(
-  //           `Only ${statistics.available_seats} seats available`,
-  //           400,
-  //           "INSUFFICIENT_SEATS"
-  //         );
-  //       }
-
-  //       // Find seats in the same row if possible
-  //       const seatsToBook = await this.findBestAvailableSeats(
-  //         numSeats,
-  //         availableSeats
-  //       );
-
-  //       // Book seats one by one (without transaction)
-  //       const bookedSeats = [];
-  //       for (const seat of seatsToBook) {
-  //         try {
-  //           // Double-check if seat is still available
-  //           const existingBooking = await db
-  //             .select()
-  //             .from(bookings)
-  //             .where(
-  //               and(
-  //                 eq(bookings.seat_id, seat.id),
-  //                 eq(bookings.booking_date, date),
-  //                 eq(bookings.status, "active")
-  //               )
-  //             )
-  //             .limit(1);
-
-  //           if (existingBooking.length > 0) {
-  //             // If any seat is already taken, cancel all previous bookings
-  //             if (bookedSeats.length > 0) {
-  //               await this.cancelBookings(bookedSeats.map((b) => b.id));
-  //             }
-  //             throw new APIError(
-  //               "Selected seats are no longer available",
-  //               400,
-  //               "SEATS_UNAVAILABLE"
-  //             );
-  //           }
-
-  //           // Book the seat
-  //           const [booking] = await db
-  //             .insert(bookings)
-  //             .values({
-  //               user_id: userId,
-  //               seat_id: seat.id,
-  //               booking_date: date,
-  //               status: "active",
-  //             })
-  //             .returning();
-
-  //           bookedSeats.push(booking);
-  //         } catch (error) {
-  //           // If there's an error booking any seat, cancel all previous bookings
-  //           if (bookedSeats.length > 0) {
-  //             await this.cancelBookings(bookedSeats.map((b) => b.id));
-  //           }
-  //           throw error;
-  //         }
-  //       }
-
-  //       // Get updated seat information
-  //       const bookedSeatsDetails = await Promise.all(
-  //         bookedSeats.map(async (booking) => {
-  //           const [seatInfo] = await db
-  //             .select()
-  //             .from(seats)
-  //             .where(eq(seats.id, booking.seat_id));
-  //           return {
-  //             booking,
-  //             seat: seatInfo,
-  //           };
-  //         })
-  //       );
-
-  //       return {
-  //         message: `Successfully booked ${numSeats} seat(s)`,
-  //         bookings: bookedSeats,
-  //         seats: bookedSeatsDetails,
-  //       };
-  //     } catch (error) {
-  //       logger.error("Error in bookSeats:", error);
-  //       if (error instanceof APIError) throw error;
-  //       throw new APIError(
-  //         error.message || "Failed to book seats",
-  //         500,
-  //         "BOOKING_ERROR"
-  //       );
-  //     }
-  //   },
 
   async bookSeats(userId, numSeats, date) {
     try {
@@ -189,7 +80,6 @@ export const bookingService = {
         availableSeats
       );
 
-      // Book seats one by one (without transaction)
       const bookedSeats = [];
       for (const seat of seatsToBook) {
         try {
@@ -295,7 +185,7 @@ export const bookingService = {
     }
   },
 
-  // Also update the cancelBookings method
+  // cancelBookings method
   async cancelBookings(bookingIds) {
     try {
       // Get the seat IDs from the bookings
@@ -360,8 +250,6 @@ export const bookingService = {
     }
   },
 
-  //exp
-
   // Reset (cancel) all user's bookings
 
   async resetUserBookings(userId) {
@@ -400,7 +288,6 @@ export const bookingService = {
 
       logger.info(`Updated ${updatedSeats.length} seats to is_booked=false`);
 
-      // Then update the bookings
       const cancelledBookings = await db
         .update(bookings)
         .set({
@@ -437,7 +324,6 @@ export const bookingService = {
     }
   },
 
-  // Add a helper method to verify seat status
   async verifySeatStatus(seatIds) {
     const seatStatus = await db
       .select()
@@ -447,7 +333,6 @@ export const bookingService = {
     return seatStatus;
   },
 
-  //booking status
   async getBookingStatus(userId) {
     const [activeBookings, bookedSeats] = await Promise.all([
       db
@@ -466,9 +351,7 @@ export const bookingService = {
       totalBookedSeats: bookedSeats.length,
     };
   },
-  //exp
 
-  // Helper function to find best available seats
   async findBestAvailableSeats(numSeats, availableSeats) {
     // Group available seats by row
     const seatsByRow = availableSeats.reduce((acc, seat) => {

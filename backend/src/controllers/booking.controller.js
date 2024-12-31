@@ -59,23 +59,6 @@ export const bookingController = {
     });
   }),
 
-  // getUserBookings: asyncHandler(async (req, res) => {
-  //   const bookings = await bookingService.getUserBookings(req.user.id);
-  //   res.json({
-  //     status: "success",
-  //     data: bookings,
-  //   });
-  // }),
-
-  // resetUserBookings: asyncHandler(async (req, res) => {
-  //   const bookings = await bookingService.resetUserBookings(req.user.id);
-  //   res.json({
-  //     status: "success",
-  //     message: "All bookings have been reset",
-  //     data: bookings,
-  //   });
-  // }),
-
   getUserBookings: asyncHandler(async (req, res) => {
     const userBookings = await bookingService.getUserBookings(req.user.id);
 
@@ -87,20 +70,6 @@ export const bookingController = {
       },
     });
   }),
-
-  // Reset all bookings for a user
-  // resetUserBookings: asyncHandler(async (req, res) => {
-  //   const result = await bookingService.resetUserBookings(req.user.id);
-
-  //   res.json({
-  //     status: "success",
-  //     message: result.message,
-  //     data: {
-  //       cancelled_bookings: result.cancelledBookings,
-  //       total_cancelled: result.cancelledBookings.length,
-  //     },
-  //   });
-  // }),
 
   resetUserBookings: asyncHandler(async (req, res) => {
     const result = await bookingService.resetUserBookings(req.user.id);
