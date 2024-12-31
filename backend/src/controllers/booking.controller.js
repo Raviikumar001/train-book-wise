@@ -1,10 +1,12 @@
 import { bookingService } from "../services/booking.service.js";
 import { asyncHandler } from "../middlewares/error.middleware.js";
 import { APIError } from "../middlewares/error.middleware.js";
-
+import { db } from "../config/db.config.js";
+import { seats } from "../models/schema.js";
+import { eq } from "drizzle-orm";
 export const bookingController = {
   getAvailableSeats: asyncHandler(async (req, res) => {
-    const date = new Date(req.query.date || new Date());
+    const date = new Date(req.query.date || new Date().toISOString());
     const seatData = await bookingService.getAvailableSeats(date);
     res.json({
       status: "success",

@@ -27,7 +27,6 @@ export const bookingService = {
       // Map seats with their booking status
       const seatsWithStatus = allSeats.map((seat) => ({
         ...seat,
-        is_booked: bookedSeatIds.has(seat.id),
       }));
 
       // Calculate statistics
