@@ -27,6 +27,17 @@ export default function LoginPage() {
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Check for empty email
+    if (!formData.email.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    // Check for empty password
+    if (!formData.password.trim()) {
+      toast.error("Please enter your password");
+      return;
+    }
     e.preventDefault();
     setIsLoading(true);
 
