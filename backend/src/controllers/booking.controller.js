@@ -72,34 +72,8 @@ export const bookingController = {
   }),
 
   resetUserBookings: asyncHandler(async (req, res) => {
-    const result = await bookingService.resetUserBookings(req.user.id);
-
-    // If there were no active bookings, check if there are any seats that need resetting
-    if (result.cancelledBookings.length === 0) {
-      // Find any seats that might be stuck with is_booked = true
-      const stuckSeats = await db
-        .select()
-        .from(seats)
-        .where(eq(seats.is_booked, true));
-
-      if (stuckSeats.length > 0) {
-        // Reset these seats
-        await db
-          .update(seats)
-          .set({ is_booked: false })
-          .where(eq(seats.is_booked, true))
-          .returning();
-
-        return res.json({
-          status: "success",
-          message: "Reset stuck seats",
-          data: {
-            seats_reset: stuckSeats,
-            total_reset: stuckSeats.length,
-          },
-        });
-      }
-    }
+    const userId = req.user.id;
+    const result = await bookingService.resetUserBookings(userId);
 
     res.json({
       status: "success",

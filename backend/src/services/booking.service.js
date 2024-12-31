@@ -251,13 +251,11 @@ export const bookingService = {
   },
 
   // Reset (cancel) all user's bookings
-
   async resetUserBookings(userId) {
     try {
-      // Log the userId for debugging
       logger.info(`Attempting to reset bookings for user: ${userId}`);
 
-      // Get all active bookings for the user
+      // First check if the user has any active bookings
       const activeBookings = await db
         .select()
         .from(bookings)
@@ -265,59 +263,44 @@ export const bookingService = {
           and(eq(bookings.user_id, userId), eq(bookings.status, "active"))
         );
 
-      // Log found bookings
-      logger.info(`Found ${activeBookings.length} active bookings`);
+      logger.info(
+        `Found ${activeBookings.length} active bookings for user ${userId}`
+      );
 
       if (activeBookings.length === 0) {
         return {
-          message: "No active bookings found",
+          message: "No bookings found to reset",
           cancelledBookings: [],
+          updatedSeats: [],
         };
       }
 
-      // Get all seat IDs from active bookings
       const seatIds = activeBookings.map((booking) => booking.seat_id);
-      logger.info(`Seats to update: ${seatIds.join(", ")}`);
 
-      // First update the seats
       const updatedSeats = await db
         .update(seats)
         .set({ is_booked: false })
         .where(inArray(seats.id, seatIds))
         .returning();
 
-      logger.info(`Updated ${updatedSeats.length} seats to is_booked=false`);
-
       const cancelledBookings = await db
         .update(bookings)
         .set({
           status: "cancelled",
+          cancelled_at: new Date(),
         })
         .where(and(eq(bookings.user_id, userId), eq(bookings.status, "active")))
         .returning();
 
-      logger.info(`Cancelled ${cancelledBookings.length} bookings`);
-
-      // Verify the updates
-      const verifySeats = await db
-        .select()
-        .from(seats)
-        .where(inArray(seats.id, seatIds));
-
-      logger.info(
-        "Verification of updated seats:",
-        verifySeats.map((s) => ({ id: s.id, is_booked: s.is_booked }))
-      );
-
       return {
-        message: `Successfully cancelled ${cancelledBookings.length} booking(s)`,
+        message: `Successfully reset ${cancelledBookings.length} booking(s)`,
         cancelledBookings,
-        updatedSeats: verifySeats,
+        updatedSeats,
       };
     } catch (error) {
-      logger.error("Error resetting user bookings:", error);
+      logger.error(`Error resetting bookings for user ${userId}:`, error);
       throw new APIError(
-        "Failed to reset user bookings",
+        "Failed to reset bookings",
         500,
         "RESET_BOOKINGS_ERROR"
       );
